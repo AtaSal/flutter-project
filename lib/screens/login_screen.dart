@@ -38,7 +38,7 @@ class LoginScreenState extends State<LoginScreen> {
     try {
       // Make API request
       final response = await http.post(
-        Uri.parse('http://feeds.ppu.edu/user/login?_next=/'), // Replace with correct server URL
+        Uri.parse('http://feeds.ppu.edu/API/login/'), // Replace with correct server URL
         headers: {'Content-Type': 'application/json'},
         body: ({
           'email': _emailController.text,
