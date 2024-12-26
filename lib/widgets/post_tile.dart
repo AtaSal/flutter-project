@@ -12,7 +12,14 @@ class PostTile extends StatelessWidget {
   Widget build(BuildContext context) {
     return ListTile(
       title: Text(post.body),
-      subtitle: Text('${post.datePosted.toLocal()} - ${post.likes} Likes'),
+      subtitle: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('Posted on: ${post.datePosted.toLocal()}'),
+          Text('Comments: ${post.commentsCount}'),
+          Text('Lecturer: ${post.lecturerName}'), // Add this field in Post model
+        ],
+      ),
       trailing: const Icon(Icons.arrow_forward),
       onTap: () {
         Navigator.push(

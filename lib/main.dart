@@ -1,7 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'screens/home_screen.dart';
+import 'screens/feeds_screen.dart';
 import 'screens/login_screen.dart';
 
-void main() {
+SharedPreferences? shrePref;
+
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  shrePref = await SharedPreferences.getInstance(); // Initialize SharedPreferences
   runApp(const PPUFeedApp());
 }
 
@@ -11,11 +18,17 @@ class PPUFeedApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'PPU Feed App',
+      debugShowCheckedModeBanner: false,
+      title: 'PPU Feeds App',
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),
-      home: const LoginScreen(),
+      initialRoute: shrePref?.getString("token") != null ? '/home' : '/login',
+      routes: {
+        '/home': (context) => const HomeScreen(),
+        '/feeds': (context) => const FeedsScreen(),
+        '/login': (context) => const LoginScreen(),
+      },
     );
   }
 }

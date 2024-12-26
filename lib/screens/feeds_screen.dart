@@ -1,37 +1,48 @@
 import 'package:flutter/material.dart';
+import '../widgets/app_drawer.dart';
+import '../services/api_service.dart';
 import '../models/course.dart';
 import '../widgets/course_tile.dart';
 
 class FeedsScreen extends StatelessWidget {
-  final String token;
-
-  const FeedsScreen({super.key, required this.token});
+  const FeedsScreen({super.key});
 
   Future<List<Course>> fetchCourses() async {
-    // Replace with actual API call to fetch courses
-    return [
-      Course(id: '1', name: 'Math 101', lecturer: 'Dr. Smith', college: 'Science', isSubscribed: false),
-      Course(id: '2', name: 'Physics 102', lecturer: 'Dr. Jane', college: 'Engineering', isSubscribed: true),
-    ];
+    final api = ApiService();
+    try {
+      final response = await api.get('/courses');
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> responseData = json.decode(response.body);
+        final List<dynamic> coursesData = responseData['courses'];
+        return coursesData.map((course) => Course.fromJson(course)).toList();
+      } else {
+        throw Exception('Failed to fetch courses: ${response.reasonPhrase}');
+      }
+    } catch (e) {
+      throw Exception('Error fetching courses: $e');
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('All Courses')),
+      drawer: AppDrawer(), // Add the drawer here
       body: FutureBuilder<List<Course>>(
         future: fetchCourses(),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
           } else if (snapshot.hasError) {
-            return const Center(child: Text('Failed to load courses.'));
+            return Center(
+              child: Text('Failed to load courses: ${snapshot.error}'),
+            );
           } else if (snapshot.hasData) {
             final courses = snapshot.data!;
             return ListView.builder(
               itemCount: courses.length,
               itemBuilder: (context, index) {
-                return CourseTile(course: courses[index], token: token);
+                return CourseTile(course: courses[index]);
               },
             );
           } else {

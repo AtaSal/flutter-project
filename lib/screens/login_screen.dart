@@ -1,68 +1,64 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
-import 'home_screen.dart';
+import '../main.dart'; // For shrePref
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
 
   @override
-  LoginScreenState createState() => LoginScreenState();
+  _LoginScreenState createState() => _LoginScreenState();
 }
 
-class LoginScreenState extends State<LoginScreen> {
+class _LoginScreenState extends State<LoginScreen> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   bool _isLoading = false;
 
-  void _login() async {
+  Future<void> _login() async {
     setState(() {
       _isLoading = true;
     });
 
     try {
+      // Construct the URI for the login endpoint
+      final uri = Uri.parse("http://feeds.ppu.edu/api/v1/login");
+
+      // Send a POST request with the email and password
       final response = await http.post(
-        Uri.parse('http://feeds.ppu.edu/api/login'),
-        headers: {'Content-Type': 'application/json'},
+        uri,
+        headers: {
+          "Content-Type": "application/json",
+        },
         body: json.encode({
           'email': _emailController.text.trim(),
           'password': _passwordController.text.trim(),
         }),
       );
 
+      // Check the response
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
-        if (data['status'] == 'success') {
-          if (!mounted) return; // Ensure widget is still in the tree
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(
-              builder: (context) => HomeScreen(token: data['session_token']),
-            ),
-          );
-        } else {
-          if (!mounted) return; // Ensure widget is still in the tree
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Invalid credentials')),
-          );
-        }
+        final token = data['token'];
+
+        // Save the token in SharedPreferences
+        await shrePref?.setString("token", token);
+
+        // Navigate to the home screen
+        Navigator.pushReplacementNamed(context, '/home');
       } else {
-        if (!mounted) return; // Ensure widget is still in the tree
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Login failed')),
+          SnackBar(content: Text('Login failed: ${response.reasonPhrase}')),
         );
       }
     } catch (e) {
-      if (!mounted) return; // Ensure widget is still in the tree
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Error connecting to the server')),
+        SnackBar(content: Text('Error: $e')),
       );
     } finally {
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
-      }
+      setState(() {
+        _isLoading = false;
+      });
     }
   }
 
