@@ -1,25 +1,28 @@
 class Comment {
-  final String id;
-  final String body;
+  final int id;
+   String body;
   final DateTime datePosted;
-  final int likes;
-  final String username;
+  final String author;
+  final int likesCount;
+  bool isLiked;
 
   Comment({
     required this.id,
     required this.body,
     required this.datePosted,
-    required this.likes,
-    required this.username,
+    required this.author,
+    required this.likesCount,
+    this.isLiked = false,
   });
 
   factory Comment.fromJson(Map<String, dynamic> json) {
     return Comment(
-      id: json['id'] ?? '',
-      body: json['body'] ?? '',
+      id: json['id'],
+      body: json['body'],
       datePosted: DateTime.parse(json['date_posted']),
-      likes: json['likes'] ?? 0,
-      username: json['username'] ?? '',
+      author: json['author'],
+      likesCount: json['likes_count'] ?? 0,
+      isLiked: json['liked'] ?? false,
     );
   }
 }

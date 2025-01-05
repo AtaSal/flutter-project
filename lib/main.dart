@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'screens/home_screen.dart';
-import 'screens/feeds_screen.dart';
+import 'screens/sub_cource.dart';
 import 'screens/login_screen.dart';
 
 SharedPreferences? shrePref;
@@ -26,7 +27,7 @@ class PPUFeedApp extends StatelessWidget {
       initialRoute: shrePref?.getString("token") != null ? '/home' : '/login',
       routes: {
         '/home': (context) => const HomeScreen(),
-        '/feeds': (context) => const FeedsScreen(),
+        '/feeds': (context) => const SubScreen(),
         '/login': (context) => const LoginScreen(),
       },
     );

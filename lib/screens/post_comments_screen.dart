@@ -1,14 +1,21 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
-import '../services/api_service.dart';
+import 'package:ppu_feed/main.dart';
+import 'package:ppu_feed/widgets/comment_card.dart';
 import '../models/comment.dart';
 import '../widgets/comment_tile.dart';
+import 'package:http/http.dart' as http;
 
 class PostCommentsScreen extends StatefulWidget {
-  final String postId;
-  final String token;
+  final int postId;
+  final int courceId;
+  final int sectionId;
 
-  const PostCommentsScreen({super.key, required this.postId, required this.token});
+  const PostCommentsScreen(
+      {super.key,
+      required this.courceId,
+      required this.sectionId,
+      required this.postId});
 
   @override
   _PostCommentsScreenState createState() => _PostCommentsScreenState();
@@ -16,48 +23,65 @@ class PostCommentsScreen extends StatefulWidget {
 
 class _PostCommentsScreenState extends State<PostCommentsScreen> {
   final TextEditingController _commentController = TextEditingController();
-  late Future<List<Comment>> _commentsFuture;
+  List<Comment> _comments = [];
+  bool _isLoading = true;
+
+  Future<void> _fetchComments() async {
+    String token = shrePref!.getString("token") ?? "";
+
+    final url =
+        'http://feeds.ppu.edu/api/v1/courses/${widget.courceId}/sections/${widget.sectionId}/posts/${widget.postId}/comments';
+    try {
+      final response = await http.get(
+        Uri.parse(url),
+        headers: {
+          'Authorization': '$token',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final responseData = json.decode(response.body);
+        setState(() {
+          _comments = (responseData['comments'] as List)
+              .map((data) => Comment.fromJson(data))
+              .toList();
+          _isLoading = false;
+        });
+      } else {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    } catch (error) {
+      setState(() {
+        _isLoading = false;
+      });
+    }
+  }
 
   @override
   void initState() {
     super.initState();
-    _commentsFuture = fetchComments();
-  }
-
-  Future<List<Comment>> fetchComments() async {
-    final api = ApiService();
-    try {
-      final response = await api.get('/posts/${widget.postId}/comments');
-      if (response.statusCode == 200) {
-        final Map<String, dynamic> responseData = json.decode(response.body);
-        final List<dynamic> commentsData = responseData['comments'];
-        return commentsData
-            .map((comment) => Comment.fromJson(comment))
-            .toList()
-            ..sort((a, b) => b.datePosted.compareTo(a.datePosted)); // Most recent first
-      } else {
-        throw Exception('Failed to fetch comments: ${response.reasonPhrase}');
-      }
-    } catch (e) {
-      throw Exception('Error fetching comments: $e');
-    }
+    _fetchComments();
   }
 
   Future<void> submitComment(String commentText) async {
-    final api = ApiService();
     try {
-      // Post the comment
-      await api.post('/posts/${widget.postId}/comments', {'body': commentText});
+      String token = shrePref!.getString("token") ?? "";
 
-      // Refresh comments after successful submission
-      setState(() {
-        _commentsFuture = fetchComments();
-      });
+      await http.post(
+        Uri.parse(
+            "http://feeds.ppu.edu/api/v1/courses/${widget.courceId}/sections/${widget.sectionId}/posts/${widget.postId}/comments"),
+        body: {"body": commentText},
+        headers: {
+          'Authorization': '$token',
+        },
+      );
 
-      // Clear the input field
+      _fetchComments();
+
       _commentController.clear();
 
-      // Show success message
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Comment added successfully!')),
       );
@@ -75,30 +99,29 @@ class _PostCommentsScreenState extends State<PostCommentsScreen> {
       appBar: AppBar(title: const Text('Post Comments')),
       body: Column(
         children: [
-          Expanded(
-            child: FutureBuilder<List<Comment>>(
-              future: _commentsFuture,
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const Center(child: CircularProgressIndicator());
-                } else if (snapshot.hasError) {
-                  return Center(
-                    child: Text('Failed to load comments: ${snapshot.error}'),
-                  );
-                } else if (snapshot.hasData) {
-                  final comments = snapshot.data!;
-                  return ListView.builder(
-                    itemCount: comments.length,
-                    itemBuilder: (context, index) {
-                      return CommentTile(comment: comments[index], token: widget.token);
-                    },
-                  );
-                } else {
-                  return const Center(child: Text('No comments available.'));
-                }
-              },
-            ),
-          ),
+          _isLoading
+              ? Center(
+                  child: CircularProgressIndicator(),
+                )
+              : Expanded(
+                  child: ListView.builder(
+                  itemCount: _comments.length,
+                  itemBuilder: (context, index) {
+                    return GestureDetector(
+                        onTap: () {
+                          Navigator.of(context).push(MaterialPageRoute(
+                            builder: (context) {
+                              return CommentCard(
+                                  comment: _comments[index],
+                                  courceId: widget.courceId,
+                                  sectionId: widget.sectionId,
+                                  postId: widget.postId);
+                            },
+                          ));
+                        },
+                        child: CommentTile(comment: _comments[index]));
+                  },
+                )),
           Padding(
             padding: const EdgeInsets.all(8.0),
             child: Row(
@@ -120,7 +143,8 @@ class _PostCommentsScreenState extends State<PostCommentsScreen> {
                       submitComment(commentText);
                     } else {
                       ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Comment cannot be empty')),
+                        const SnackBar(
+                            content: Text('Comment cannot be empty')),
                       );
                     }
                   },

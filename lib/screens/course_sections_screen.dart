@@ -1,75 +1,221 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
-import '../services/api_service.dart';
+import 'package:ppu_feed/main.dart';
+import 'package:ppu_feed/models/subscription.dart';
 import '../models/section.dart';
 import 'section_posts_screen.dart';
+import 'package:http/http.dart' as http;
 
-class CourseSectionsScreen extends StatelessWidget {
-  final String courseId;
-  final String token;
+class CourseSectionsScreen extends StatefulWidget {
+  final int courseId;
 
-  const CourseSectionsScreen({super.key, required this.courseId, required this.token});
+  const CourseSectionsScreen({
+    super.key,
+    required this.courseId,
+  });
 
-  Future<List<Section>> fetchSections() async {
-    final api = ApiService();
+  @override
+  State<CourseSectionsScreen> createState() => _CourseSectionsScreenState();
+}
+
+class _CourseSectionsScreenState extends State<CourseSectionsScreen> {
+  List<Section> _sections = [];
+  List<Subscription> _sub = [];
+  List<int> _subSection = [];
+  bool _isLoading = false;
+
+  Future<void> _fetchCoursesSection() async {
+    String token = shrePref!.getString("token") ?? "";
+
+    final url =
+        'http://feeds.ppu.edu/api/v1/courses/${widget.courseId}/sections';
+
     try {
-      final response = await api.get('/courses/$courseId/sections');
+      final response = await http.get(
+        Uri.parse(url),
+        headers: {
+          'Authorization': '$token',
+        },
+      );
+
       if (response.statusCode == 200) {
-        // Assuming the API returns a list of sections
-        final List<dynamic> sectionsData = response.body.split('\n'); // Example if plain text list
-        return sectionsData
-            .map((section) => Section(
-                  id: section, // Replace with actual ID from API
-                  name: "Section name here", // Replace with actual section name
-                ))
-            .toList();
-      } else {
-        throw Exception('Failed to fetch sections: ${response.reasonPhrase}');
-      }
-    } catch (e) {
-      throw Exception('Error fetching sections: $e');
+        print(response.body);
+
+        final responseData = json.decode(response.body)["sections"] as List;
+        setState(() {
+          _sections = responseData
+              .map(
+                (e) => Section.fromJson(e),
+              )
+              .toList();
+        });
+      } else {}
+    } catch (error) {}
+  }
+
+  _fetchSubscribed() async {
+    String token = shrePref!.getString("token") ?? "";
+
+    try {
+      final url = 'http://feeds.ppu.edu/api/v1/subscriptions';
+      final response = await http.get(
+        Uri.parse(url),
+        headers: {
+          'Authorization': '$token',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final responseData = jsonDecode(response.body);
+        final res = responseData['subscriptions'] as List;
+        _sub = res.map((data) => Subscription.fromJson(data)).toList();
+        _sub.forEach(
+          (element) {
+            if (element.course == _sections[0].course) {
+              _subSection.add(element.sectionid);
+            }
+          },
+        );
+        print(_subSection);
+        setState(() {
+          _sections.forEach(
+            (element) {
+              if (_subSection.contains(element.id)) {
+                element.isSub = true;
+              }
+            },
+          );
+        });
+      } else {}
+    } catch (error) {}
+  }
+
+  Future<void> _subscribeToCourse(int courseId, int section) async {
+    String token = shrePref!.getString("token") ?? "";
+
+    final url =
+        'http://feeds.ppu.edu/api/v1/courses/$courseId/sections/$section/subscribe';
+    final response = await http.post(
+      Uri.parse(url),
+      headers: {
+        'Authorization': '$token',
+      },
+    );
+
+    if (response.statusCode == 200) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Subscribed successfully')),
+      );
+      setState(() {
+        _sections.forEach(
+          (element) {
+            if (element.id == section) {
+              element.isSub = true;
+            }
+          },
+        );
+      });
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to subscribe')),
+      );
     }
+  }
+
+  Future<void> _unsubscribeFromCourse(
+      int courseId, int section, int subId) async {
+    String token = shrePref!.getString("token") ?? "";
+
+    final url =
+        'http://feeds.ppu.edu/api/v1/courses/$courseId/sections/$section/subscribe/$subId';
+    final response = await http.delete(
+      Uri.parse(url),
+      headers: {
+        'Authorization': '$token',
+      },
+    );
+
+    if (response.statusCode == 200) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Unsubscribed successfully')),
+      );
+      setState(() {
+        _sections.forEach(
+          (element) {
+            if (element.id == section) {
+              element.isSub = false;
+            }
+          },
+        );
+      });
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to unsubscribe')),
+      );
+    }
+  }
+
+  @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+    _isLoading = true;
+    getData();
+    setState(() {
+      _isLoading = false;
+    });
+  }
+
+  getData() async {
+    await _fetchCoursesSection();
+    await _fetchSubscribed();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Course Sections')),
-      body: FutureBuilder<List<Section>>(
-        future: fetchSections(),
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          } else if (snapshot.hasError) {
-            return Center(
-              child: Text('Failed to load sections: ${snapshot.error}'),
+        appBar: AppBar(title: const Text('Course Sections')),
+        body:_isLoading?Center(child: CircularProgressIndicator(),): ListView.builder(
+          itemCount: _sections.length,
+          itemBuilder: (context, index) {
+            final section = _sections[index];
+            int subid = 0;
+            _sub.forEach(
+              (element) {
+                if (element.sectionid == section.id) {
+                  subid = element.id;
+                }
+              },
             );
-          } else if (snapshot.hasData) {
-            final sections = snapshot.data!;
-            return ListView.builder(
-              itemCount: sections.length,
-              itemBuilder: (context, index) {
-                final section = sections[index];
-                return ListTile(
-                  title: Text(section.name),
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => SectionPostsScreen(
-                          sectionId: section.id,
-                          token: token,
-                        ),
-                      ),
-                    );
+            return ListTile(
+              title: Text(section.course + " " + section.name),
+              subtitle: Text(section.lecturer),
+              trailing: IconButton(
+                  onPressed: () {
+                    if (section.isSub) {
+                      _unsubscribeFromCourse(section.id, section.id, subid);
+                    } else {
+                      _subscribeToCourse(widget.courseId, section.id);
+                    }
                   },
+                  icon: Icon(section.isSub
+                      ? Icons.favorite
+                      : Icons.favorite_border_sharp)),
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => SectionPostsScreen(
+                      courceId: widget.courseId,
+                      sectionId: section.id,
+
+                    ),
+                  ),
                 );
               },
             );
-          } else {
-            return const Center(child: Text('No sections available.'));
-          }
-        },
-      ),
-    );
+          },
+        ));
   }
 }

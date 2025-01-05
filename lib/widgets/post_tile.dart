@@ -4,9 +4,10 @@ import '../screens/post_comments_screen.dart';
 
 class PostTile extends StatelessWidget {
   final Post post;
-  final String token;
+  final int sectionId;
+  final int courceId;
 
-  const PostTile({super.key, required this.post, required this.token});
+  const PostTile({super.key, required this.post,required this.courceId, required this.sectionId });
 
   @override
   Widget build(BuildContext context) {
@@ -15,9 +16,8 @@ class PostTile extends StatelessWidget {
       subtitle: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Posted on: ${post.datePosted.toLocal()}'),
-          Text('Comments: ${post.commentsCount}'),
-          Text('Lecturer: ${post.lecturerName}'), // Add this field in Post model
+          Text('Posted on: ${post.datePosted.toString()}'),
+          Text('Lecturer: ${post.author}'),
         ],
       ),
       trailing: const Icon(Icons.arrow_forward),
@@ -25,7 +25,7 @@ class PostTile extends StatelessWidget {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => PostCommentsScreen(postId: post.id, token: token),
+            builder: (context) => PostCommentsScreen(postId: post.id, courceId:courceId,sectionId: sectionId,),
           ),
         );
       },

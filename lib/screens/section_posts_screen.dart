@@ -1,65 +1,158 @@
 import 'dart:convert'; // Required for JSON decoding
 import 'package:flutter/material.dart';
-import '../services/api_service.dart';
+import 'package:ppu_feed/main.dart';
 import '../models/post.dart';
 import '../widgets/post_tile.dart';
+import 'package:http/http.dart' as http;
 
-class SectionPostsScreen extends StatelessWidget {
-  final String sectionId;
-  final String token;
+class SectionPostsScreen extends StatefulWidget {
+  final int sectionId;
+  final int courceId;
 
-  const SectionPostsScreen({super.key, required this.sectionId, required this.token});
+  const SectionPostsScreen(
+      {super.key, required this.courceId, required this.sectionId});
 
-  Future<List<Post>> fetchPosts() async {
-    final api = ApiService();
+  @override
+  State<SectionPostsScreen> createState() => _SectionPostsScreenState();
+}
+
+class _SectionPostsScreenState extends State<SectionPostsScreen> {
+  List<Post> _posts = [];
+  bool _isLoading = true;
+  final TextEditingController _postController=TextEditingController();
+  
+  Future<void> submitPost(String post) async {
     try {
-      final response = await api.get('/sections/$sectionId/posts');
-      if (response.statusCode == 200) {
-        // Parse the response body into a map
-        final Map<String, dynamic> responseData = json.decode(response.body);
+      String token = shrePref!.getString("token") ?? "";
 
-        // Extract the "posts" list from the response
-        final List<dynamic> postsData = responseData['posts'];
+      await http.post(
+        Uri.parse(
+            "http://feeds.ppu.edu/api/v1/courses/${widget.courceId}/sections/${widget.sectionId}/posts"),
+        body: {"body": post},
+        headers: {
+          'Authorization': '$token',
+        },
+      );
 
-        // Convert each post into a Post object and sort them by date
-        return postsData
-            .map((post) => Post.fromJson(post))
-            .toList()
-            ..sort((a, b) => b.datePosted.compareTo(a.datePosted));
-      } else {
-        throw Exception('Failed to fetch posts: ${response.reasonPhrase}');
-      }
+    _fetchCoursePosts();
+
+      _postController.clear();
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Comment added successfully!')),
+      );
     } catch (e) {
-      throw Exception('Error fetching posts: $e');
+      // Show error message
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to submit comment: $e')),
+      );
     }
+  }
+
+
+  Future<void> _fetchCoursePosts() async {
+    String token = shrePref!.getString("token") ?? "";
+
+    final url =
+        'http://feeds.ppu.edu/api/v1/courses/${widget.courceId}/sections/${widget.sectionId}/posts';
+
+    try {
+      final response = await http.get(
+        Uri.parse(url),
+        headers: {
+          'Authorization': '$token',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final responseData = json.decode(response.body);
+        setState(() {
+          _posts = (responseData['posts'] as List)
+              .map((data) => Post.fromJson(data))
+              .toList();
+          _isLoading = false;
+        });
+      } else {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    } catch (error) {
+      setState(() {
+        _isLoading = false;
+      });
+    }
+  }
+
+  @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+    _fetchCoursePosts();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Course Posts')),
-      body: FutureBuilder<List<Post>>(
-        future: fetchPosts(),
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          } else if (snapshot.hasError) {
-            return Center(
-              child: Text('Failed to load posts: ${snapshot.error}'),
-            );
-          } else if (snapshot.hasData) {
-            final posts = snapshot.data!;
-            return ListView.builder(
-              itemCount: posts.length,
-              itemBuilder: (context, index) {
-                return PostTile(post: posts[index], token: token);
-              },
-            );
-          } else {
-            return const Center(child: Text('No posts available.'));
-          }
-        },
-      ),
-    );
+        appBar: AppBar(title: const Text('Course Posts')),
+        body: Column(
+          children: [
+            Card(
+              child: Column(
+                children: [
+                  Text("add new post"),
+                  SizedBox(
+                    height: 20,
+                  ),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: TextField(
+                          controller: _postController,
+                          decoration: const InputDecoration(
+                            labelText: 'Add a post',
+                            hintText: 'Type your post here...',
+                          ),
+                        ),
+                      ),
+                        IconButton(
+                  icon: const Icon(Icons.send),
+                  onPressed: () {
+                    final commentText = _postController.text.trim();
+                    if (commentText.isNotEmpty) {
+                      submitPost(commentText);
+                    } else {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                            content: Text('Comment cannot be empty')),
+                      );
+                    }
+                  },
+                ),
+                    ],
+                  )
+                ],
+              ),
+            ),
+            _isLoading
+                ? Center(
+                    child: CircularProgressIndicator(),
+                  )
+                : Expanded(
+                  child: ListView.builder(
+                    reverse: true,
+                      itemCount: _posts.length,
+                      itemBuilder: (context, index) {
+                        return Card(
+                            child: PostTile(
+                          post: _posts[index],
+                          courceId: widget.courceId,
+                          sectionId: widget.sectionId,
+                        ));
+                      },
+                    ),
+                )
+          ],
+        ));
   }
 }

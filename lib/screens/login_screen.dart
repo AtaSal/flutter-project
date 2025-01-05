@@ -22,7 +22,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
     try {
       // Construct the URI for the login endpoint
-      final uri = Uri.parse("http://feeds.ppu.edu/api/v1/login");
+      final uri = Uri.parse("http://feeds.ppu.edu/api/login");
 
       // Send a POST request with the email and password
       final response = await http.post(
@@ -31,17 +31,17 @@ class _LoginScreenState extends State<LoginScreen> {
           "Content-Type": "application/json",
         },
         body: json.encode({
-          'email': _emailController.text.trim(),
-          'password': _passwordController.text.trim(),
+          'email': _emailController.text,
+          'password': _passwordController.text,
         }),
       );
+      print(response.body);
 
       // Check the response
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
-        final token = data['token'];
+        final token = data['session_token'];
 
-        // Save the token in SharedPreferences
         await shrePref?.setString("token", token);
 
         // Navigate to the home screen

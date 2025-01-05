@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:ppu_feed/main.dart';
 import '../screens/home_screen.dart';
-import '../screens/feeds_screen.dart';
+import '../screens/sub_cource.dart';
 import '../screens/login_screen.dart';
 import 'package:provider/provider.dart';
-import '../provider/cource_provider.dart';
 
 class AppDrawer extends StatelessWidget {
   @override
@@ -36,11 +36,11 @@ class AppDrawer extends StatelessWidget {
           ),
           ListTile(
             leading: Icon(Icons.feed),
-            title: Text('Feeds'),
+            title: Text('Subscription'),
             onTap: () {
-              Navigator.pushReplacement(
+              Navigator.push(
                 context,
-                MaterialPageRoute(builder: (context) => FeedsScreen()),
+                MaterialPageRoute(builder: (context) => SubScreen()),
               );
             },
           ),
@@ -48,7 +48,7 @@ class AppDrawer extends StatelessWidget {
             leading: Icon(Icons.logout),
             title: Text('Logout'),
             onTap: () async {
-              await Provider.of<CourceProvider>(context, listen: false).logout();
+              await shrePref!.remove("token");
               Navigator.pushReplacement(
                 context,
                 MaterialPageRoute(builder: (context) => LoginScreen()),
