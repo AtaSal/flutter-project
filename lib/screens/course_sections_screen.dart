@@ -22,7 +22,7 @@ class CourseSectionsScreen extends StatefulWidget {
 class _CourseSectionsScreenState extends State<CourseSectionsScreen> {
   List<Section> _sections = [];
   List<Subscription> _sub = [];
-  List<int> _subSection = [];
+  final List<int> _subSection = [];
   bool _isLoading = false;
 
   Future<void> _fetchCoursesSection() async {
@@ -35,7 +35,7 @@ class _CourseSectionsScreenState extends State<CourseSectionsScreen> {
       final response = await http.get(
         Uri.parse(url),
         headers: {
-          'Authorization': '$token',
+          'Authorization': token,
         },
       );
 
@@ -58,11 +58,11 @@ class _CourseSectionsScreenState extends State<CourseSectionsScreen> {
     String token = shrePref!.getString("token") ?? "";
 
     try {
-      final url = 'http://feeds.ppu.edu/api/v1/subscriptions';
+      const url = 'http://feeds.ppu.edu/api/v1/subscriptions';
       final response = await http.get(
         Uri.parse(url),
         headers: {
-          'Authorization': '$token',
+          'Authorization': token,
         },
       );
 
@@ -70,22 +70,18 @@ class _CourseSectionsScreenState extends State<CourseSectionsScreen> {
         final responseData = jsonDecode(response.body);
         final res = responseData['subscriptions'] as List;
         _sub = res.map((data) => Subscription.fromJson(data)).toList();
-        _sub.forEach(
-          (element) {
+        for (var element in _sub) {
             if (element.course == _sections[0].course) {
               _subSection.add(element.sectionid);
             }
-          },
-        );
+          }
         print(_subSection);
         setState(() {
-          _sections.forEach(
-            (element) {
+          for (var element in _sections) {
               if (_subSection.contains(element.id)) {
                 element.isSub = true;
               }
-            },
-          );
+            }
         });
       } else {}
     } catch (error) {}
@@ -99,26 +95,24 @@ class _CourseSectionsScreenState extends State<CourseSectionsScreen> {
     final response = await http.post(
       Uri.parse(url),
       headers: {
-        'Authorization': '$token',
+        'Authorization': token,
       },
     );
 
     if (response.statusCode == 200) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Subscribed successfully')),
+        const SnackBar(content: Text('Subscribed successfully')),
       );
       setState(() {
-        _sections.forEach(
-          (element) {
+        for (var element in _sections) {
             if (element.id == section) {
               element.isSub = true;
             }
-          },
-        );
+          }
       });
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to subscribe')),
+        const SnackBar(content: Text('Failed to subscribe')),
       );
     }
   }
@@ -132,26 +126,24 @@ class _CourseSectionsScreenState extends State<CourseSectionsScreen> {
     final response = await http.delete(
       Uri.parse(url),
       headers: {
-        'Authorization': '$token',
+        'Authorization': token,
       },
     );
 
     if (response.statusCode == 200) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Unsubscribed successfully')),
+        const SnackBar(content: Text('Unsubscribed successfully')),
       );
       setState(() {
-        _sections.forEach(
-          (element) {
+        for (var element in _sections) {
             if (element.id == section) {
               element.isSub = false;
             }
-          },
-        );
+          }
       });
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to unsubscribe')),
+        const SnackBar(content: Text('Failed to unsubscribe')),
       );
     }
   }
@@ -176,20 +168,18 @@ class _CourseSectionsScreenState extends State<CourseSectionsScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
         appBar: AppBar(title: const Text('Course Sections')),
-        body:_isLoading?Center(child: CircularProgressIndicator(),): ListView.builder(
+        body:_isLoading?const Center(child: CircularProgressIndicator(),): ListView.builder(
           itemCount: _sections.length,
           itemBuilder: (context, index) {
             final section = _sections[index];
             int subid = 0;
-            _sub.forEach(
-              (element) {
+            for (var element in _sub) {
                 if (element.sectionid == section.id) {
                   subid = element.id;
                 }
-              },
-            );
+              }
             return ListTile(
-              title: Text(section.course + " " + section.name),
+              title: Text("${section.course} ${section.name}"),
               subtitle: Text(section.lecturer),
               trailing: IconButton(
                   onPressed: () {

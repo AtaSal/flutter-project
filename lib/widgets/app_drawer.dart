@@ -3,16 +3,17 @@ import 'package:ppu_feed/main.dart';
 import '../screens/home_screen.dart';
 import '../screens/sub_cource.dart';
 import '../screens/login_screen.dart';
-import 'package:provider/provider.dart';
 
 class AppDrawer extends StatelessWidget {
+  const AppDrawer({super.key});
+
   @override
   Widget build(BuildContext context) {
     return Drawer(
       child: ListView(
         padding: EdgeInsets.zero,
         children: [
-          DrawerHeader(
+          const DrawerHeader(
             decoration: BoxDecoration(
               color: Colors.blue,
             ),
@@ -25,33 +26,33 @@ class AppDrawer extends StatelessWidget {
             ),
           ),
           ListTile(
-            leading: Icon(Icons.home),
-            title: Text('Home'),
+            leading: const Icon(Icons.home),
+            title: const Text('Home'),
             onTap: () {
               Navigator.pushReplacement(
                 context,
-                MaterialPageRoute(builder: (context) => HomeScreen()),
+                MaterialPageRoute(builder: (context) => const HomeScreen()),
               );
             },
           ),
           ListTile(
-            leading: Icon(Icons.feed),
-            title: Text('Subscription'),
+            leading: const Icon(Icons.feed),
+            title: const Text('Subscription'),
             onTap: () {
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (context) => SubScreen()),
+                MaterialPageRoute(builder: (context) => const SubScreen()),
               );
             },
           ),
           ListTile(
-            leading: Icon(Icons.logout),
-            title: Text('Logout'),
+            leading: const Icon(Icons.logout),
+            title: const Text('Logout'),
             onTap: () async {
               await shrePref!.remove("token");
               Navigator.pushReplacement(
                 context,
-                MaterialPageRoute(builder: (context) => LoginScreen()),
+                MaterialPageRoute(builder: (context) => const LoginScreen()),
               );
             },
           ),

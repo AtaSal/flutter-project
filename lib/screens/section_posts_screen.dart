@@ -30,7 +30,7 @@ class _SectionPostsScreenState extends State<SectionPostsScreen> {
             "http://feeds.ppu.edu/api/v1/courses/${widget.courceId}/sections/${widget.sectionId}/posts"),
         body: {"body": post},
         headers: {
-          'Authorization': '$token',
+          'Authorization': token,
         },
       );
 
@@ -39,7 +39,7 @@ class _SectionPostsScreenState extends State<SectionPostsScreen> {
       _postController.clear();
 
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Comment added successfully!')),
+        const SnackBar(content: Text('Comment added successfully!')),
       );
     } catch (e) {
       // Show error message
@@ -60,7 +60,7 @@ class _SectionPostsScreenState extends State<SectionPostsScreen> {
       final response = await http.get(
         Uri.parse(url),
         headers: {
-          'Authorization': '$token',
+          'Authorization': token,
         },
       );
 
@@ -100,8 +100,8 @@ class _SectionPostsScreenState extends State<SectionPostsScreen> {
             Card(
               child: Column(
                 children: [
-                  Text("add new post"),
-                  SizedBox(
+                  const Text("add new post"),
+                  const SizedBox(
                     height: 20,
                   ),
                   Row(
@@ -135,7 +135,7 @@ class _SectionPostsScreenState extends State<SectionPostsScreen> {
               ),
             ),
             _isLoading
-                ? Center(
+                ? const Center(
                     child: CircularProgressIndicator(),
                   )
                 : Expanded(

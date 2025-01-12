@@ -11,12 +11,11 @@ class CommentCard extends StatefulWidget {
   final int sectionId;
   final int postId;
   const CommentCard(
-      {Key? key,
+      {super.key,
       required this.comment,
       required this.courceId,
       required this.sectionId,
-      required this.postId})
-      : super(key: key);
+      required this.postId});
 
   @override
   _CommentCardState createState() => _CommentCardState();
@@ -42,7 +41,7 @@ class _CommentCardState extends State<CommentCard> {
     final response = await http.get(
       Uri.parse(url),
       headers: {
-        'Authorization': '$token',
+        'Authorization': token,
       },
     );
 
@@ -63,7 +62,7 @@ class _CommentCardState extends State<CommentCard> {
     final response = await http.get(
       Uri.parse(url),
       headers: {
-        'Authorization': '$token',
+        'Authorization': token,
       },
     );
 
@@ -91,7 +90,7 @@ class _CommentCardState extends State<CommentCard> {
     final response = await http.post(
       Uri.parse(url),
       headers: {
-        'Authorization': '$token',
+        'Authorization': token,
       },
     );
 
@@ -113,7 +112,7 @@ class _CommentCardState extends State<CommentCard> {
     Comment comment = widget.comment;
 
     return Scaffold(
-      appBar: AppBar(title: Text("comments details"),),
+      appBar: AppBar(title: const Text("comments details"),),
       body: Center(
         child: Card(
           child: Column(
@@ -121,14 +120,14 @@ class _CommentCardState extends State<CommentCard> {
               ListTile(
                 title: Text(comment.body),
                 subtitle:
-                    Text(comment.datePosted.toString() + " " + comment.author),
+                    Text("${comment.datePosted} " + comment.author),
               ),
-              Divider(),
+              const Divider(),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceAround,
                 children: [
                   _isLoading
-                      ? CircularProgressIndicator()
+                      ? const CircularProgressIndicator()
                       : Row(
                           children: [
                             Text(likeCount.toString()),

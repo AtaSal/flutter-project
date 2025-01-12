@@ -35,7 +35,7 @@ class _PostCommentsScreenState extends State<PostCommentsScreen> {
       final response = await http.get(
         Uri.parse(url),
         headers: {
-          'Authorization': '$token',
+          'Authorization': token,
         },
       );
 
@@ -74,7 +74,7 @@ class _PostCommentsScreenState extends State<PostCommentsScreen> {
             "http://feeds.ppu.edu/api/v1/courses/${widget.courceId}/sections/${widget.sectionId}/posts/${widget.postId}/comments"),
         body: {"body": commentText},
         headers: {
-          'Authorization': '$token',
+          'Authorization': token,
         },
       );
 
@@ -83,7 +83,7 @@ class _PostCommentsScreenState extends State<PostCommentsScreen> {
       _commentController.clear();
 
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Comment added successfully!')),
+        const SnackBar(content: Text('Comment added successfully!')),
       );
     } catch (e) {
       // Show error message
@@ -100,7 +100,7 @@ class _PostCommentsScreenState extends State<PostCommentsScreen> {
       body: Column(
         children: [
           _isLoading
-              ? Center(
+              ? const Center(
                   child: CircularProgressIndicator(),
                 )
               : Expanded(

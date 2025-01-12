@@ -30,7 +30,7 @@ class _SubScreenState extends State<SubScreen> {
     String token = shrePref!.getString("token") ?? "";
     final res = await http.get(
       Uri.parse("http://feeds.ppu.edu/api/v1/subscriptions"),
-      headers: {"Authorization": "$token"},
+      headers: {"Authorization": token},
     );
     print(res.body);
 
@@ -48,7 +48,7 @@ class _SubScreenState extends State<SubScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('subscription course')),
-      body: _isLoading?Center(child: CircularProgressIndicator(),): ListView.builder(
+      body: _isLoading?const Center(child: CircularProgressIndicator(),): ListView.builder(
               itemCount: sub.length,
               itemBuilder: (context, index) {
                 return CourseTile(course: sub[index]);

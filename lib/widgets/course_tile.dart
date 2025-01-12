@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:ppu_feed/models/subscription.dart';
-import '../models/course.dart';
 
 class CourseTile extends StatefulWidget {
   final Subscription course;
@@ -32,7 +31,7 @@ class _CourseTileState extends State<CourseTile> {
           children: [
             Text('Section: ${widget.course.section}'),
             Text('Lecturer: ${widget.course.lecturer}'),
-            Text('College: IT'),
+            const Text('College: IT'),
           ],
         ),
       

@@ -32,7 +32,7 @@ class _HomeScreenState extends State<HomeScreen> {
     String token = shrePref!.getString("token") ?? "";
     final res = await http.get(
       Uri.parse("http://feeds.ppu.edu/api/v1/courses"),
-      headers: {"Authorization": "$token"},
+      headers: {"Authorization": token},
     );
     print(res.body);
 
@@ -52,9 +52,9 @@ class _HomeScreenState extends State<HomeScreen> {
       appBar: AppBar(
         title: const Text('Home'),
       ),
-      drawer: AppDrawer(),
+      drawer: const AppDrawer(),
       body: _isLoading
-          ? Center(child: CircularProgressIndicator())
+          ? const Center(child: CircularProgressIndicator())
           :  ListView.builder(
                   itemCount: cource.length,
                   itemBuilder: (context, index) {
